@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
-import { catchError, Observable, tap, throwError } from 'rxjs';
+import { catchError, map, Observable, tap, throwError } from 'rxjs';
 
 import { Product } from './product';
 
@@ -16,21 +16,37 @@ export class ProductService {
 
   //method to get the list of products
   //use an interface to define the type returned by the method
-  getProducts(): Observable<Product[]> {
-    return (
-      this.http
-        //get method automaticaly maps to that shape
-        .get<Product[]>(this.productsUrl)
-        //use a pipe method to pipe through a set of operators
-        .pipe(
-          //tap - displays some debugging info
-          tap((data) => console.log('Products: ', JSON.stringify(data))),
-          //catchErrror - handles errors
-          //if an error occurs we call the handle error method
-          catchError(this.handleError)
-        )
-    );
-  }
+  // getProducts(): Observable<Product[]> {
+  //   return (
+  //     this.http
+  //       //get method automaticaly maps to that shape
+  //       .get<Product[]>(this.productsUrl)
+  //       //use a pipe method to pipe through a set of operators
+  //       .pipe(
+  //         //tap - displays some debugging info
+  //         tap((data) => console.log('Products: ', JSON.stringify(data))),
+  //         //catchErrror - handles errors
+  //         //if an error occurs we call the handle error method
+  //         catchError(this.handleError)
+  //       )
+  //   );
+  // }
+
+  products$ = this.http.get<Product[]>(this.productsUrl).pipe(
+    map((products) =>
+      products.map(
+        (product) =>
+          ({
+            ...product,
+            price: product.price ? product.price * 1.5 : 0,
+            searchKey: [product.productName],
+          } as Product)
+      )
+    ),
+    //map((item) => item.price * 1.5),
+    tap((data) => console.log('Products: ', JSON.stringify(data))),
+    catchError(this.handleError)
+  );
 
   private fakeProduct(): Product {
     return {
